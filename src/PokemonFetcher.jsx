@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 
-// Mapeo de tipos en español a inglés para búsquedas
 const tipoEsAEn = {
   normal: 'normal',
   fuego: 'fire',
@@ -26,20 +25,22 @@ function PokemonFetcher({ searchName, searchType }) {
   const [pokemonData, setPokemonData] = useState([]);
   const [error, setError] = useState(null);
 
-  // Traduce los tipos al español usando la API
   const traducirTipos = async (types) => {
     const traducciones = await Promise.all(
       types.map(async (tipo) => {
-        const res = await fetch(tipo.type.url);
-        const data = await res.json();
-        const nombreEs = data.names.find((n) => n.language.name === 'es');
-        return nombreEs ? nombreEs.name : tipo.type.name;
+        try {
+          const res = await fetch(tipo.type.url);
+          const data = await res.json();
+          const nombreEs = data.names.find((n) => n.language.name === 'es');
+          return nombreEs ? nombreEs.name : tipo.type.name;
+        } catch {
+          return tipo.type.name;
+        }
       })
     );
     return traducciones;
   };
 
-  // Buscar por nombre
   const fetchPokemonByName = async (name) => {
     try {
       const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`);
@@ -54,7 +55,6 @@ function PokemonFetcher({ searchName, searchType }) {
     }
   };
 
-  // Buscar por tipo (en español)
   const fetchPokemonByType = async (tipoEs) => {
     const tipoEn = tipoEsAEn[tipoEs.toLowerCase()];
     if (!tipoEn) {
@@ -67,16 +67,24 @@ function PokemonFetcher({ searchName, searchType }) {
       const response = await fetch(`https://pokeapi.co/api/v2/type/${tipoEn}`);
       if (!response.ok) throw new Error('⚠️ Tipo no encontrado.');
       const data = await response.json();
-      const pokemons = data.pokemon.slice(0, 6); // Limitar resultados
-      const details = await Promise.all(
+      const pokemons = data.pokemon;
+      const details = await Promise.allSettled(
         pokemons.map(async (p) => {
-          const res = await fetch(p.pokemon.url);
-          const pokeData = await res.json();
-          const tiposTraducidos = await traducirTipos(pokeData.types);
-          return { ...pokeData, tiposTraducidos };
+          try {
+            const res = await fetch(p.pokemon.url);
+            const pokeData = await res.json();
+            if (!pokeData.sprites?.front_default) return null;
+            const tiposTraducidos = await traducirTipos(pokeData.types);
+            return { ...pokeData, tiposTraducidos };
+          } catch {
+            return null;
+          }
         })
       );
-      setPokemonData(details);
+      const filtrados = details
+        .filter((r) => r.status === 'fulfilled' && r.value)
+        .map((r) => r.value);
+      setPokemonData(filtrados);
       setError(null);
     } catch (err) {
       setPokemonData([]);
@@ -84,21 +92,33 @@ function PokemonFetcher({ searchName, searchType }) {
     }
   };
 
-  // Mostrar Pokémon aleatorios
-  const fetchRandomPokemons = async () => {
+  const fetchAllPokemons = async () => {
     try {
-      const promises = Array.from({ length: 4 }, async () => {
-        const id = Math.floor(Math.random() * 151) + 1;
-        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-        const data = await res.json();
-        const tiposTraducidos = await traducirTipos(data.types);
-        return { ...data, tiposTraducidos };
-      });
-      const results = await Promise.all(promises);
-      setPokemonData(results);
+      const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=2000');
+      const data = await res.json();
+
+      const detalles = await Promise.allSettled(
+        data.results.map(async (pokemon) => {
+          try {
+            const resPokemon = await fetch(pokemon.url);
+            const detalle = await resPokemon.json();
+            if (!detalle.sprites?.front_default) return null;
+            const tiposTraducidos = await traducirTipos(detalle.types);
+            return { ...detalle, tiposTraducidos };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      const filtrados = detalles
+        .filter((r) => r.status === 'fulfilled' && r.value)
+        .map((r) => r.value);
+
+      setPokemonData(filtrados);
       setError(null);
     } catch (err) {
-      setError('⚠️ Error al cargar Pokémon aleatorios.');
+      setError('⚠️ Error grave al cargar todos los Pokémon.');
     }
   };
 
@@ -108,7 +128,7 @@ function PokemonFetcher({ searchName, searchType }) {
     } else if (searchType) {
       fetchPokemonByType(searchType);
     } else {
-      fetchRandomPokemons();
+      fetchAllPokemons();
     }
   }, [searchName, searchType]);
 
