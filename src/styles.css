@@ -160,7 +160,7 @@ body {
   box-shadow: 0 25px 40px rgba(0, 0, 0, 0.6);
 }
 
-/* 🖼️ Imagen del Pokémon */
+/*  Imagen del Pokémon */
 .pokemon-card img {
   width: 120px;
   height: 120px;
@@ -174,7 +174,7 @@ body {
   to { transform: translateY(-8px); }
 }
 
-/* 🧾 Cuadro animado para el nombre */
+/* Cuadro animado para el nombre */
 .pokemon-card h3 {
   background: linear-gradient(135deg, #2a75bb, #3b9bd6);
   color: #fff;
@@ -191,7 +191,7 @@ body {
   100% { box-shadow: 0 0 5px #2a75bb; }
 }
 
-/* 📋 Detalles */
+/*  Detalles */
 .pokemon-card p {
   font-size: 0.95rem;
   color: #fff;
@@ -202,7 +202,7 @@ body {
   color: #ffcb05;
 }
 
-/* ⚠️ Mensaje de error */
+/*  Mensaje de error */
 .pokemon-container.error {
   background-color: rgba(255, 0, 0, 0.2);
   color: #fff;
