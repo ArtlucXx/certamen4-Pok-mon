@@ -1,4 +1,4 @@
-/* 🎥 Capa de video animado encima del fondo GIF */
+/*  Capa de video animado encima del fondo GIF */
 #background-video {
   position: fixed;
   top: 0;
@@ -12,7 +12,7 @@
   animation: fadeIn 3s ease-in-out;
 }
 
-/* 🌧️ Fondo animado del sitio */
+/*  Fondo animado del sitio */
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
@@ -24,7 +24,7 @@ body {
   animation: backgroundPulse 20s infinite alternate;
 }
 
-/* ✨ Animaciones globales */
+/*  Animaciones globales */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 0.5; }
